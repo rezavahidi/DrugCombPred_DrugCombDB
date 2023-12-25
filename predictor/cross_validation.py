@@ -27,7 +27,8 @@ def eval_model(model, optimizer, loss_func, train_data, test_data,
                 sl=True, mdl_dir=mdl_dir)
     test_loss = eval_epoch(model, test_loader, loss_func, gpu_id)
     test_loss /= len(test_data)
-    return test_loss
+    test_accuracy, test_recall = eval_acc(model, test_loader, loss_func, gpu_id, len(test_data))
+    return test_loss, test_accuracy, test_recall
 
 
 def step_batch(model, batch, loss_func, gpu_id=None, train=True):
@@ -71,6 +72,52 @@ def eval_epoch(model, loader, loss_func, gpu_id=None):
             loss = step_batch(model, batch, loss_func, gpu_id, train=False)
             epoch_loss += loss.item()
     return epoch_loss
+
+def step_acc(model, batch, loss_func, gpu_id=None, train=True):
+    drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat, y_true = batch
+    if gpu_id is not None:
+        drug1_fp = drug1_fp.cuda(gpu_id)
+        drug2_fp = drug2_fp.cuda(gpu_id)
+        drug1_dti = drug1_dti.cuda(gpu_id)
+        drug2_dti = drug2_dti.cuda(gpu_id)
+        cell_feat = cell_feat.cuda(gpu_id)
+        y_true = y_true.cuda(gpu_id)
+
+
+    if train:
+        y_pred = model(drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
+    else:
+        yp1 = model(drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
+        yp2 = model(drug2_fp, drug1_fp, drug2_dti, drug1_dti, cell_feat)
+        y_pred = (yp1 + yp2) / 2
+    TP = 0
+    TN = 0
+    FN = 0
+    loss = loss_func(y_pred, y_true)
+    for i in range(len(y_pred)):
+        if y_true[i] * y_pred[i] > 0:
+            if y_true[i] > 0:
+                TP += 1
+            else:
+                TN += 1
+        elif y_true[i] > 0:
+            FN += 1
+    return TP, TN, FN
+
+def eval_acc(model, loader, loss_func, gpu_id, test_len):
+    model.eval()
+    with torch.no_grad():
+        TP = 0
+        TN = 0
+        FN = 0
+        for batch in loader:
+            t1, t2, t3 = step_acc(model, batch, loss_func, gpu_id, train=False)
+            TP += t1
+            TN += t2
+            FN += t3
+        acc = (TP + TN) / test_len
+        recall = TP / (TP + FN)
+    return acc, recall
 
 
 def train_model(model, optimizer, loss_func, train_loader, valid_loader, n_epoch, patience, gpu_id,
@@ -179,10 +226,12 @@ def cv(args, out_dir):
         test_mdl_dir = os.path.join(out_dir, str(test_fold))
         if not os.path.exists(test_mdl_dir):
             os.makedirs(test_mdl_dir)
-        test_loss = eval_model(model, optimizer, loss_func, train_data, test_data,
+        test_loss, acc, recall = eval_model(model, optimizer, loss_func, train_data, test_data,
                                args.batch, args.epoch, args.patience, gpu_id, test_mdl_dir)
         test_losses.append(test_loss)
         logging.info("Test loss: {:.4f}".format(test_loss))
+        logging.info("Test accuracy: {:.4f}".format(acc))
+        logging.info("Test recall: {:.4f}".format(recall))
         logging.info("*" * n_delimiter + '\n')
     logging.info("CV completed")
     with open(test_loss_file, 'wb') as f:
