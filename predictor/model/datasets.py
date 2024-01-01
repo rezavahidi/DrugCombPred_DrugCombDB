@@ -72,6 +72,7 @@ class FastSynergyDataset(Dataset):
             f.readline()
             for line in f:
                 drug1, drug2, cellname, score, fold = line.rstrip().split('\t')
+                fold = random.randint(0, 4)
                 if drug1 in valid_drugs and drug2 in valid_drugs and cellname in valid_cells:
                     if int(fold) in use_folds:
                         #drug1_id = get_index_by_name(drug1,files_dict)
