@@ -67,7 +67,7 @@ class FastSynergyDataset(Dataset):
         fp = get_FP_data(fp_feat_file)
         valid_drugs = set(self.drug2id.keys())
         valid_cells = set(self.cell2id.keys())
-        #files_dict = read_files()
+        files_dict = read_files()
         with open(synergy_score_file, 'r') as f:
             f.readline()
             for line in f:
@@ -75,11 +75,13 @@ class FastSynergyDataset(Dataset):
                 fold = random.randint(0, 4)
                 if drug1 in valid_drugs and drug2 in valid_drugs and cellname in valid_cells:
                     if int(fold) in use_folds:
-                        #drug1_id = get_index_by_name(drug1,files_dict)
-                        #drug2_id = get_index_by_name(drug2,files_dict)
+                        drug1_id = get_index_by_name(drug1,files_dict)
+                        drug2_id = get_index_by_name(drug2,files_dict)
                         sample = [
                             # TODO: specify drug_feat 
                             # drug1_feat + drug2_feat + cell_feat + score
+                            torch.IntTensor([drug1_id]),
+                            torch.IntTensor([drug2_id]),
                             fp[drug1],
                             fp[drug2],
                             dti[drug1],
@@ -93,6 +95,8 @@ class FastSynergyDataset(Dataset):
                         self.raw_samples.append(raw_sample)
                         if train:
                             sample = [
+                                torch.IntTensor([drug2_id]),
+                                torch.IntTensor([drug1_id]),
                                 fp[drug2],
                                 fp[drug1],
                                 dti[drug2],
@@ -121,10 +125,12 @@ class FastSynergyDataset(Dataset):
         # print('-----------------')
         print(self.samples[0])
         print(self.samples[i][0] and self.samples[i][1] for i in indices)
-        d1 = torch.cat([torch.unsqueeze(self.samples[i][0], 0) for i in indices], dim=0)
-        d2 = torch.cat([torch.unsqueeze(self.samples[i][1], 0) for i in indices], dim=0)
-        t1 = torch.cat([torch.unsqueeze(self.samples[i][2], 0) for i in indices], dim=0)
-        t2 = torch.cat([torch.unsqueeze(self.samples[i][3], 0) for i in indices], dim=0)
-        c = torch.cat([torch.unsqueeze(self.samples[i][4], 0) for i in indices], dim=0)
-        y = torch.cat([torch.unsqueeze(self.samples[i][5], 0) for i in indices], dim=0)
-        return d1, d2, t1, t2, c, y
+        i1 = torch.cat([torch.unsqueeze(self.samples[i][0], 0) for i in indices], dim=0)
+        i2 = torch.cat([torch.unsqueeze(self.samples[i][1], 0) for i in indices], dim=0)
+        d1 = torch.cat([torch.unsqueeze(self.samples[i][2], 0) for i in indices], dim=0)
+        d2 = torch.cat([torch.unsqueeze(self.samples[i][3], 0) for i in indices], dim=0)
+        t1 = torch.cat([torch.unsqueeze(self.samples[i][4], 0) for i in indices], dim=0)
+        t2 = torch.cat([torch.unsqueeze(self.samples[i][5], 0) for i in indices], dim=0)
+        c = torch.cat([torch.unsqueeze(self.samples[i][6], 0) for i in indices], dim=0)
+        y = torch.cat([torch.unsqueeze(self.samples[i][7], 0) for i in indices], dim=0)
+        return i1, i2, d1, d2, t1, t2, c, y
