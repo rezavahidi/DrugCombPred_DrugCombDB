@@ -34,6 +34,8 @@ class Connector(nn.Module):
         
         drug_index = torch.unique(torch.cat((drug1_idx,drug2_idx)))
 
+        feat_d = int(DRUG_MODEL_HYPERPARAMETERS["model_dense_neurons"]/2)
+        all_drug_feat = torch.empty((0, feat_d), dtype=torch.float32)
         train_loader = DataLoader(self.moleculeDataset, batch_size=DRUG_MODEL_HYPERPARAMETERS["batch_size"], shuffle=True)
         for _, batch in enumerate(train_loader):
             if self.gpu_id is not None:
@@ -48,9 +50,10 @@ class Connector(nn.Module):
                                     edge_attr.float(),
                                     edge_index, 
                                     batch.batch)
-        print(drug_feat.shape)
-        drug1_feat = drug_feat[drug1_idx]
-        drug2_feat = drug_feat[drug2_idx]
+            all_drug_feat = torch.cat((all_drug_feat, drug_feat), 0)
+            
+        drug1_feat = all_drug_feat[drug1_idx]
+        drug2_feat = all_drug_feat[drug2_idx]
 
         feat = torch.cat([drug1_feat, drug2_feat, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat], 1)
         return feat
