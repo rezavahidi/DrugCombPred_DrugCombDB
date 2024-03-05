@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import os
 import sys 
 from torch_geometric.data import DataLoader
+import time
 
 PROJ_DIR = os.path.dirname(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')))
 
@@ -34,9 +35,15 @@ class Connector(nn.Module):
         
         drug_index = torch.unique(torch.cat((drug1_idx,drug2_idx)))
 
+        # start = time.time()
+
+        subset = torch.utils.data.Subset(self.moleculeDataset, drug_index)
+
         feat_d = int(DRUG_MODEL_HYPERPARAMETERS["model_dense_neurons"]/2)
         all_drug_feat = torch.empty((0, feat_d), dtype=torch.float32)
-        train_loader = DataLoader(self.moleculeDataset, batch_size=DRUG_MODEL_HYPERPARAMETERS["batch_size"], shuffle=True)
+        if self.gpu_id is not None:
+            all_drug_feat = all_drug_feat.cuda(self.gpu_id)
+        train_loader = DataLoader(subset, batch_size=DRUG_MODEL_HYPERPARAMETERS["batch_size"], shuffle=True)
         for _, batch in enumerate(train_loader):
             if self.gpu_id is not None:
                 batch = batch.cuda(self.gpu_id)
@@ -52,7 +59,11 @@ class Connector(nn.Module):
                                     batch.batch)
             all_drug_feat = torch.cat((all_drug_feat, drug_feat), 0)
             
+        # print("molecule loop end time:", time.time() - start)
+        value_to_index = {value.item(): index for index, value in enumerate(drug_index)}
+        drug1_idx = torch.tensor([value_to_index[value.item()] for value in drug1_idx])
         drug1_feat = all_drug_feat[drug1_idx]
+        drug2_idx = torch.tensor([value_to_index[value.item()] for value in drug2_idx])
         drug2_feat = all_drug_feat[drug2_idx]
 
         feat = torch.cat([drug1_feat, drug2_feat, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat], 1)
