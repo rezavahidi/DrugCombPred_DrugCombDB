@@ -51,6 +51,18 @@ def step_batch(model, batch, loss_func, gpu_id=None, train=True):
         yp2 = model(drug1_idx, drug2_idx, drug2_fp, drug1_fp, drug2_dti, drug1_dti, cell_feat)
         y_pred = (yp1 + yp2) / 2
     loss = loss_func(y_pred, y_true)
+
+    # weighted loss:
+    # indices_true = []
+    # indices_false = []
+    # for i in range(len(y_pred)):
+    #     if (y_true[i] > 10 and y_pred[i] > 10) or (y_true[i] < 10 and y_pred[i] < 10):
+    #         indices_true.append(i)
+    #     else:
+    #         indices_false.append(i)
+    # loss_true = loss_func(y_pred[indices_true], y_true[indices_true])
+    # loss_false = loss_func(y_pred[indices_false], y_true[indices_false])
+    # loss = loss_true + 5 * loss_false
     return loss
 
 
@@ -99,7 +111,7 @@ def step_acc(model, batch, loss_func, gpu_id=None, train=True):
     FN = 0
     loss = loss_func(y_pred, y_true)
     for i in range(len(y_pred)):
-        if y_true[i] * y_pred[i] > 0:
+        if (y_true[i] > 10 and y_pred[i] > 10) or (y_true[i] < 10 and y_pred[i] < 10):
             if y_true[i] > 0:
                 TP += 1
             else:
@@ -177,7 +189,8 @@ def cv(args, out_dir):
     n_delimiter = 60
     loss_func = nn.MSELoss(reduction='sum')
     test_losses = []
-    
+    all_acc = []
+    all_recall = []
     for test_fold in range(n_folds):
         outer_trn_folds = [x for x in range(n_folds) if x != test_fold]
         logging.info("Outer: train folds {}, test folds {}".format(outer_trn_folds, test_fold))
@@ -233,6 +246,8 @@ def cv(args, out_dir):
             os.makedirs(test_mdl_dir)
         test_loss, acc, recall = eval_model(model, optimizer, loss_func, train_data, test_data,
                                args.batch, args.epoch, args.patience, gpu_id, test_mdl_dir)
+        all_acc.append(acc)
+        all_recall.append(recall)
         test_losses.append(test_loss)
         logging.info("Test loss: {:.4f}".format(test_loss))
         logging.info("Test accuracy: {:.4f}".format(acc))
@@ -248,6 +263,8 @@ def cv(args, out_dir):
     rmse_loss = [x ** 0.5 for x in test_losses]
     mu, sigma = calc_stat(rmse_loss)
     logging.info("RMSE: {:.4f} ± {:.4f}".format(mu, sigma))
+    logging.info("average accuracy on test: {}".format(sum(all_acc) / len(all_acc)))
+    logging.info("average recall on test: {}".format({sum(all_recall) / len(all_recall)}))
 
 
 def main():

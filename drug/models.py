@@ -30,7 +30,7 @@ class GCN(torch.nn.Module):
 
         # Initialize the layers
         self.conv1 = GCNConv(num_features, hidden_channels)
-        self.conv2 = GCNConv(hidden_channels, num_features)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
 
     def forward(self, x, edge_index):
         # First Message Passing Layer (Transformation)

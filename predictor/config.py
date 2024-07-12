@@ -15,7 +15,7 @@ HYPERPARAMETERS = {
 }
 
 DRUG_MODEL_HYPERPARAMETERS = {
-    "batch_size": 64,
+    "batch_size": 128,
     "learning_rate": 0.01,
     "weight_decay": 0.0001,
     "sgd_momentum": 0.8,
@@ -23,7 +23,7 @@ DRUG_MODEL_HYPERPARAMETERS = {
     "pos_weight" : 1.0,  
     "model_embedding_size": 32,
     "model_attention_heads": 3,
-    "model_layers": 3,
+    "model_layers": 1,
     "model_dropout_rate": 0.5,
     "model_top_k_ratio": 0.5,
     "model_top_k_every_n": 1,

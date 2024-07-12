@@ -1,0 +1,84 @@
+[2023-12-25 20:01:49] Outer: train folds [1, 2, 3, 4], test folds 0
+[2023-12-25 20:01:49] ------------------------------------------------------------
+[2023-12-25 20:01:49] Hidden size: 2048 | Learning rate: 0.001
+[2023-12-25 20:01:54] Start inner loop: train folds [2, 3, 4], valid folds [1]
+[2023-12-25 20:03:38] Start inner loop: train folds [1, 3, 4], valid folds [2]
+[2023-12-25 20:05:24] Start inner loop: train folds [1, 2, 4], valid folds [3]
+[2023-12-25 20:07:14] Start inner loop: train folds [1, 2, 3], valid folds [4]
+[2023-12-25 20:12:31] Inner loop completed. Mean valid loss: 29.7748
+[2023-12-25 20:12:31] ------------------------------------------------------------
+[2023-12-25 20:12:43] Best hidden size: 2048 | Best learning rate: 0.001
+[2023-12-25 20:12:43] Start test on fold [0].
+[2023-12-25 20:14:52] Test loss: 52.7515
+[2023-12-25 20:14:52] Test accuracy: 0.9534
+[2023-12-25 20:14:52] Test recall: 0.2944
+[2023-12-25 20:14:52] ************************************************************
+
+[2023-12-25 20:14:52] Outer: train folds [0, 2, 3, 4], test folds 1
+[2023-12-25 20:14:52] ------------------------------------------------------------
+[2023-12-25 20:14:52] Hidden size: 2048 | Learning rate: 0.001
+[2023-12-25 20:14:57] Start inner loop: train folds [2, 3, 4], valid folds [0]
+[2023-12-25 20:16:46] Start inner loop: train folds [0, 3, 4], valid folds [2]
+[2023-12-25 20:18:33] Start inner loop: train folds [0, 2, 4], valid folds [3]
+[2023-12-25 20:20:20] Start inner loop: train folds [0, 2, 3], valid folds [4]
+[2023-12-25 20:22:03] Inner loop completed. Mean valid loss: 31.8710
+[2023-12-25 20:22:03] ------------------------------------------------------------
+[2023-12-25 20:22:16] Best hidden size: 2048 | Best learning rate: 0.001
+[2023-12-25 20:22:16] Start test on fold [1].
+[2023-12-25 20:24:18] Test loss: 21.1069
+[2023-12-25 20:24:18] Test accuracy: 0.9535
+[2023-12-25 20:24:18] Test recall: 0.2407
+[2023-12-25 20:24:18] ************************************************************
+
+[2023-12-25 20:24:18] Outer: train folds [0, 1, 3, 4], test folds 2
+[2023-12-25 20:24:18] ------------------------------------------------------------
+[2023-12-25 20:24:18] Hidden size: 2048 | Learning rate: 0.001
+[2023-12-25 20:24:23] Start inner loop: train folds [1, 3, 4], valid folds [0]
+[2023-12-25 20:26:10] Start inner loop: train folds [0, 3, 4], valid folds [1]
+[2023-12-25 20:27:54] Start inner loop: train folds [0, 1, 4], valid folds [3]
+[2023-12-25 20:29:40] Start inner loop: train folds [0, 1, 3], valid folds [4]
+[2023-12-25 20:32:14] Inner loop completed. Mean valid loss: 31.6030
+[2023-12-25 20:32:14] ------------------------------------------------------------
+[2023-12-25 20:32:27] Best hidden size: 2048 | Best learning rate: 0.001
+[2023-12-25 20:32:27] Start test on fold [2].
+[2023-12-25 20:34:33] Test loss: 23.4426
+[2023-12-25 20:34:33] Test accuracy: 0.9532
+[2023-12-25 20:34:33] Test recall: 0.2827
+[2023-12-25 20:34:33] ************************************************************
+
+[2023-12-25 20:34:33] Outer: train folds [0, 1, 2, 4], test folds 3
+[2023-12-25 20:34:33] ------------------------------------------------------------
+[2023-12-25 20:34:33] Hidden size: 2048 | Learning rate: 0.001
+[2023-12-25 20:34:38] Start inner loop: train folds [1, 2, 4], valid folds [0]
+[2023-12-25 20:36:30] Start inner loop: train folds [0, 2, 4], valid folds [1]
+[2023-12-25 20:38:16] Start inner loop: train folds [0, 1, 4], valid folds [2]
+[2023-12-25 20:40:01] Start inner loop: train folds [0, 1, 2], valid folds [4]
+[2023-12-25 20:41:50] Inner loop completed. Mean valid loss: 31.4696
+[2023-12-25 20:41:50] ------------------------------------------------------------
+[2023-12-25 20:42:03] Best hidden size: 2048 | Best learning rate: 0.001
+[2023-12-25 20:42:03] Start test on fold [3].
+[2023-12-25 20:44:09] Test loss: 24.0053
+[2023-12-25 20:44:09] Test accuracy: 0.9541
+[2023-12-25 20:44:09] Test recall: 0.2568
+[2023-12-25 20:44:09] ************************************************************
+
+[2023-12-25 20:44:09] Outer: train folds [0, 1, 2, 3], test folds 4
+[2023-12-25 20:44:09] ------------------------------------------------------------
+[2023-12-25 20:44:09] Hidden size: 2048 | Learning rate: 0.001
+[2023-12-25 20:44:14] Start inner loop: train folds [1, 2, 3], valid folds [0]
+[2023-12-25 20:47:15] Start inner loop: train folds [0, 2, 3], valid folds [1]
+[2023-12-25 20:48:57] Start inner loop: train folds [0, 1, 3], valid folds [2]
+[2023-12-25 20:52:48] Start inner loop: train folds [0, 1, 2], valid folds [3]
+[2023-12-25 20:54:30] Inner loop completed. Mean valid loss: 23.2567
+[2023-12-25 20:54:30] ------------------------------------------------------------
+[2023-12-25 20:54:42] Best hidden size: 2048 | Best learning rate: 0.001
+[2023-12-25 20:54:42] Start test on fold [4].
+[2023-12-25 20:57:20] Test loss: 486180.8396
+[2023-12-25 20:57:20] Test accuracy: 0.9569
+[2023-12-25 20:57:20] Test recall: 0.4063
+[2023-12-25 20:57:20] ************************************************************
+
+[2023-12-25 20:57:20] CV completed
+[2023-12-25 20:57:20] MSE: 97260.4292 ± 194460.2055
+[2023-12-25 20:57:20] Confidence interval: [-144155.0985, 338675.9568]
+[2023-12-25 20:57:20] RMSE: 143.7730 ± 276.7485
