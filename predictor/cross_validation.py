@@ -111,7 +111,7 @@ def step_acc(model, batch, loss_func, gpu_id=None, train=True):
     FN = 0
     loss = loss_func(y_pred, y_true)
     for i in range(len(y_pred)):
-        if (y_true[i] > 10 and y_pred[i] > 10) or (y_true[i] < 10 and y_pred[i] < 10):
+        if (y_true[i] > 0 and y_pred[i] > 0) or (y_true[i] < 0 and y_pred[i] < 0):
             if y_true[i] > 0:
                 TP += 1
             else:
@@ -131,12 +131,15 @@ def eval_acc(model, loader, loss_func, gpu_id, test_len):
             TP += t1
             TN += t2
             FN += t3
+        print(TP, TN, test_len)
         acc = (TP + TN) / test_len
+        if (TP + FN) == 0:
+            return acc, 0
         recall = TP / (TP + FN)
     return acc, recall
 
 
-def train_model(model, optimizer, loss_func, train_loader, valid_loader, n_epoch, patience, gpu_id,
+def train_model(model, optimizer, loss_func, train_loader, valid_loader, n_epoch, patience, gpu_id, val_len,
                 sl=False, mdl_dir=None):
     min_loss = float('inf')
     angry = 0
@@ -159,13 +162,14 @@ def train_model(model, optimizer, loss_func, train_loader, valid_loader, n_epoch
                 break
     if sl:
         model.load_state_dict(torch.load(find_best_model(mdl_dir)))
-    return min_loss
+    test_accuracy, test_recall = eval_acc(model, valid_loader, loss_func, gpu_id, val_len)
+    return val_loss, test_accuracy, test_recall
 
 
 def create_model(data, hidden_size, gpu_id=None):
     # TODO: use our own MLP model
     # get 256
-    model = MLP(data.cell_feat_len() + 2 * 40 + 2 * 256 + 2 * 64, hidden_size, gpu_id)
+    model = MLP(data.cell_feat_len() + 2 * 40 + 2 * 256 + 2 * 60, hidden_size, gpu_id)
     if gpu_id is not None:
         model = model.cuda(gpu_id)
     return model
@@ -202,29 +206,43 @@ def cv(args, out_dir):
                 param.append((hs, lr))
                 logging.info("Hidden size: {} | Learning rate: {}".format(hs, lr))
                 ret_vals = []
-                for valid_fold in outer_trn_folds:
-                    inner_trn_folds = [x for x in outer_trn_folds if x != valid_fold]
-                    valid_folds = [valid_fold]
+                accs = []
+                recalls = []
+                for i in range(616):
+                    # inner_trn_folds = [x for x in outer_trn_folds if x != valid_fold]
+                    # valid_folds = [valid_fold]
                     train_data = FastSynergyDataset(DRUG2ID_FILE, CELL2ID_FILE, CELL_FEAT_FILE,
-                                                    SYNERGY_FILE, DTI_FEAT_FILE, FP_FEAT_FILE, use_folds=inner_trn_folds)
+                                                    SYNERGY_FILE, DTI_FEAT_FILE, FP_FEAT_FILE, use_folds=i)
                     valid_data = FastSynergyDataset(DRUG2ID_FILE, CELL2ID_FILE, CELL_FEAT_FILE,
-                                                    SYNERGY_FILE, DTI_FEAT_FILE, FP_FEAT_FILE, use_folds=valid_folds, train=False)
+                                                    SYNERGY_FILE, DTI_FEAT_FILE, FP_FEAT_FILE, use_folds=i, train=False)
+                    if len(valid_data) < 10:
+                        continue
                     train_loader = FastTensorDataLoader(*train_data.tensor_samples(), batch_size=args.batch,
                                                         shuffle=True)
-                    valid_loader = FastTensorDataLoader(*valid_data.tensor_samples(), batch_size=len(valid_data) // 4)
+                    valid_loader = FastTensorDataLoader(*valid_data.tensor_samples(), batch_size=(len(valid_data) // 4))
+                    print(len(train_data), len(valid_data))
                     model = create_model(train_data, hs, gpu_id)
                     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
                     logging.info(
-                        "Start inner loop: train folds {}, valid folds {}".format(inner_trn_folds, valid_folds))
-                    ret = train_model(model, optimizer, loss_func, train_loader, valid_loader,
-                                      args.epoch, args.patience, gpu_id, sl=False)
+                        "Start inner loop: drug {}, of {} with number of samples {}".format(i + 1, 616, len(valid_data)))
+                    ret, acc, recall = train_model(model, optimizer, loss_func, train_loader, valid_loader,
+                                      args.epoch, args.patience, gpu_id, len(valid_data), sl=False)
                     ret_vals.append(ret)
+                    accs.append(acc)
+                    recalls.append(recall)
+                    logging.info(
+                        "loss {}, acc {}, recall {}".format(ret, acc, recall))
                     del model
 
                 inner_loss = sum(ret_vals) / len(ret_vals)
+                inner_acc = sum(accs) / len(accs)
+                inner_recall = sum(recalls) / len(recalls)
                 logging.info("Inner loop completed. Mean valid loss: {:.4f}".format(inner_loss))
+                logging.info("Inner loop completed. Mean acc: {:.4f}".format(inner_acc))
+                logging.info("Inner loop completed. Mean recall: {:.4f}".format(inner_recall))
                 logging.info("-" * n_delimiter)
-                losses.append(inner_loss)
+                # losses.append(inner_loss)
+                exit()
 
         torch.cuda.memory_summary(device=None, abbreviated=False)
         gc.collect()
