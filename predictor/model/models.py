@@ -40,7 +40,7 @@ class Connector(nn.Module):
 
         subset = torch.utils.data.Subset(self.moleculeDataset, drug_index)
 
-        feat_d = int(DRUG_MODEL_HYPERPARAMETERS["model_dense_neurons"]/2)
+        feat_d = int(60)
         all_drug_feat = torch.empty((0, feat_d), dtype=torch.float32)
         # GCN
         # all_drug_feat = torch.empty((0, self.moleculeDataset[0].x.shape[1] * 2), dtype=torch.float32)
@@ -58,13 +58,15 @@ class Connector(nn.Module):
 
             # Passing the node features and the connection info
             # GCN:
-            # drug_feat = self.gcn(x.float(), 
-            #                         edge_index)
+            drug_feat = self.gcn(x.float(), 
+                                    edge_index)
 
-            drug_feat = self.transformerGNN(x.float(), 
-                                    edge_attr.float(),
-                                    edge_index, 
-                                    batch.batch)
+            # GAT:
+
+            # drug_feat = self.transformerGNN(x.float(), 
+            #                         edge_attr.float(),
+            #                         edge_index, 
+            #                         batch.batch)
             all_drug_feat = torch.cat((all_drug_feat, drug_feat), 0)
             
         # print("molecule loop end time:", time.time() - start)
@@ -95,13 +97,13 @@ class MLP(nn.Module):
         feat = self.connector(drug1_idx, drug2_idx, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
         
         # Reshape feat for attention layer, assuming feat is [batch_size, seq_len, input_size]
-        feat = feat.unsqueeze(0)  # Add a dummy batch dimension if necessary
-        attn_output, attn_output_weights = self.attention(feat, feat, feat)
+        # feat = feat.unsqueeze(0)  # Add a dummy batch dimension if necessary
+        # attn_output, attn_output_weights = self.attention(feat, feat, feat)
         
-        # Reshape back if needed
-        attn_output = attn_output.squeeze(0)
+        # # Reshape back if needed
+        # attn_output = attn_output.squeeze(0)
         
-        out = self.linear1(attn_output)
+        out = self.linear1(feat)
         out = self.relu(out)
         out = self.batch_norm1(out)
         out = self.linear2(out)

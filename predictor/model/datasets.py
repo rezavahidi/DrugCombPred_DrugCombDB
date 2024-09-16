@@ -74,7 +74,7 @@ class FastSynergyDataset(Dataset):
                 drug1, drug2, cellname, score, fold = line.rstrip().split('\t')
                 #fold = random.randint(0, 4)
                 if drug1 in valid_drugs and drug2 in valid_drugs and cellname in valid_cells:
-                    if int(fold) in use_folds:
+                    if (train and (int(self.drug2id[drug1]) != use_folds and int(self.drug2id[drug2]) != use_folds)) or ((not train) and (int(self.drug2id[drug1]) == use_folds or int(self.drug2id[drug2]) == use_folds)):
                         drug1_id = get_index_by_name(drug1,files_dict)
                         drug2_id = get_index_by_name(drug2,files_dict)
                         sample = [
