@@ -4,7 +4,7 @@ import json
 import random
 import pandas as pd
 import numpy as np
-from const import SYNERGY_FILE, CELL_FEAT_FILE, CELL2ID_FILE, OUTPUT_DIR, DRUGNAME_2_DRUGBANKID_FILE, DRUGN2ID_FILE
+from const import SYNERGY_FILE, CELL_FEAT_FILE, CELL2ID_FILE, OUTPUT_DIR, DRUGNAME_2_DRUGBANKID_FILE, DRUG2ID_FILE
 
 project_path = os.path.dirname(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 drug2FP_file = os.path.join(project_path, 'drug/data/drug2FP_synergy.csv')
@@ -87,28 +87,21 @@ def random_split_indices(n_samples, train_rate: float = None, test_rate: float =
 # --------------------------------------------------------------------- Our Part:
 
 def read_files():
-    drug_name2drugbank_id_df = pd.read_csv(DRUGNAME_2_DRUGBANKID_FILE, sep='\s+')
-    drug2id_df = pd.read_csv(DRUGN2ID_FILE , sep='\t')
+    #drug_name2drugbank_id_df = pd.read_csv(DRUGNAME_2_DRUGBANKID_FILE, sep='\s+')
+    drug2id_df = pd.read_csv(DRUG2ID_FILE , sep='\t')
 
-    return {'drug_name2drugbank_id_df': drug_name2drugbank_id_df, 'drug2id_df': drug2id_df}
+    return {'drug2id_df': drug2id_df}
 
 def get_index_by_name(drug_name, files_dict = None):
     
     if files_dict == None:
         files_dict = read_files()
-    drug_name2drugbank_id_df = files_dict['drug_name2drugbank_id_df']
+
     drug2id_df = files_dict['drug2id_df']
 
-    drug_bank_id = drug_name2drugbank_id_df[drug_name2drugbank_id_df['drug_name'] == drug_name].drug_bank_id.item()
+    row = drug2id_df[drug2id_df['drug_name'] == drug_name]
 
-    negative_index = list(drug_name2drugbank_id_df['drug_name']).index(drug_name)
-
-    
-    row = drug2id_df[drug2id_df['DrugBank_id'] == drug_bank_id]
-    if row.empty:
-        drug_index = - len(list(drug_name2drugbank_id_df['drug_name'])) + negative_index 
-    else:
-        drug_index = row.node_index.item()
+    drug_index = row.id.item()
 
     return drug_index
 

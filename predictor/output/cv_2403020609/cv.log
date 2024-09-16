@@ -1,0 +1,6 @@
+[2024-03-02 06:09:18] Outer: train folds [1, 2, 3, 4], test folds 0
+[2024-03-02 06:09:18] ------------------------------------------------------------
+[2024-03-02 06:09:18] Hidden size: 2048 | Learning rate: 0.001
+[2024-03-02 06:09:50] input SP3D2 not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:09:55] input S not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:09:56] input SP3D not in allowable set ['SP', 'SP2', 'SP3']:

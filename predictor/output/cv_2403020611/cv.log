@@ -1,0 +1,11 @@
+[2024-03-02 06:12:05] Outer: train folds [1, 2, 3, 4], test folds 0
+[2024-03-02 06:12:05] ------------------------------------------------------------
+[2024-03-02 06:12:05] Hidden size: 2048 | Learning rate: 0.001
+[2024-03-02 06:12:35] input SP3D2 not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:12:39] input S not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:12:40] input SP3D not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:12:42] input S not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:12:42] input S not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:12:42] input S not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:12:43] input S not in allowable set ['SP', 'SP2', 'SP3']:
+[2024-03-02 06:12:44] Start inner loop: train folds [2, 3, 4], valid folds [1]

@@ -32,8 +32,10 @@ def eval_model(model, optimizer, loss_func, train_data, test_data,
 
 
 def step_batch(model, batch, loss_func, gpu_id=None, train=True):
-    drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat, y_true = batch
+    drug1_idx, drug2_idx, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat, y_true = batch
     if gpu_id is not None:
+        drug1_idx = drug1_idx.cuda(gpu_id)
+        drug2_idx = drug2_idx.cuda(gpu_id)
         drug1_fp = drug1_fp.cuda(gpu_id)
         drug2_fp = drug2_fp.cuda(gpu_id)
         drug1_dti = drug1_dti.cuda(gpu_id)
@@ -43,12 +45,24 @@ def step_batch(model, batch, loss_func, gpu_id=None, train=True):
 
 
     if train:
-        y_pred = model(drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
+        y_pred = model(drug1_idx, drug2_idx, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
     else:
-        yp1 = model(drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
-        yp2 = model(drug2_fp, drug1_fp, drug2_dti, drug1_dti, cell_feat)
+        yp1 = model(drug1_idx, drug2_idx, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
+        yp2 = model(drug1_idx, drug2_idx, drug2_fp, drug1_fp, drug2_dti, drug1_dti, cell_feat)
         y_pred = (yp1 + yp2) / 2
     loss = loss_func(y_pred, y_true)
+
+    # weighted loss:
+    # indices_true = []
+    # indices_false = []
+    # for i in range(len(y_pred)):
+    #     if (y_true[i] > 10 and y_pred[i] > 10) or (y_true[i] < 10 and y_pred[i] < 10):
+    #         indices_true.append(i)
+    #     else:
+    #         indices_false.append(i)
+    # loss_true = loss_func(y_pred[indices_true], y_true[indices_true])
+    # loss_false = loss_func(y_pred[indices_false], y_true[indices_false])
+    # loss = loss_true + 5 * loss_false
     return loss
 
 
@@ -74,8 +88,10 @@ def eval_epoch(model, loader, loss_func, gpu_id=None):
     return epoch_loss
 
 def step_acc(model, batch, loss_func, gpu_id=None, train=True):
-    drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat, y_true = batch
+    drug1_idx, drug2_idx, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat, y_true = batch
     if gpu_id is not None:
+        drug1_idx = drug1_idx.cuda(gpu_id)
+        drug2_idx = drug2_idx.cuda(gpu_id)
         drug1_fp = drug1_fp.cuda(gpu_id)
         drug2_fp = drug2_fp.cuda(gpu_id)
         drug1_dti = drug1_dti.cuda(gpu_id)
@@ -85,17 +101,17 @@ def step_acc(model, batch, loss_func, gpu_id=None, train=True):
 
 
     if train:
-        y_pred = model(drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
+        y_pred = model(drug1_idx, drug2_idx, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
     else:
-        yp1 = model(drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
-        yp2 = model(drug2_fp, drug1_fp, drug2_dti, drug1_dti, cell_feat)
+        yp1 = model(drug1_idx, drug2_idx, drug1_fp, drug2_fp, drug1_dti, drug2_dti, cell_feat)
+        yp2 = model(drug1_idx, drug2_idx, drug2_fp, drug1_fp, drug2_dti, drug1_dti, cell_feat)
         y_pred = (yp1 + yp2) / 2
     TP = 0
     TN = 0
     FN = 0
     loss = loss_func(y_pred, y_true)
     for i in range(len(y_pred)):
-        if y_true[i] * y_pred[i] > 0:
+        if (y_true[i] > 10 and y_pred[i] > 10) or (y_true[i] < 10 and y_pred[i] < 10):
             if y_true[i] > 0:
                 TP += 1
             else:
@@ -149,30 +165,32 @@ def train_model(model, optimizer, loss_func, train_loader, valid_loader, n_epoch
 def create_model(data, hidden_size, gpu_id=None):
     # TODO: use our own MLP model
     # get 256
-    model = MLP(data.cell_feat_len() + 2 * 40 + 2 * 256, hidden_size, gpu_id)
+    model = MLP(data.cell_feat_len() + 2 * 40 + 2 * 256 + 2 * 64, hidden_size, gpu_id)
     if gpu_id is not None:
         model = model.cuda(gpu_id)
     return model
 
 
 def cv(args, out_dir):
-    # Clear any cached memory
+
     gc.collect()
-    #torch.cuda.empty_cache()
+
     save_args(args, os.path.join(out_dir, 'args.json'))
     test_loss_file = os.path.join(out_dir, 'test_loss.pkl')
     print("cuda available: " + str(torch.cuda.is_available()))
+
     if torch.cuda.is_available() and (args.gpu is not None):
         gpu_id = args.gpu
     else:
         gpu_id = None
 
-    print()
 
     n_folds = 5
     n_delimiter = 60
     loss_func = nn.MSELoss(reduction='sum')
     test_losses = []
+    all_acc = []
+    all_recall = []
     for test_fold in range(n_folds):
         outer_trn_folds = [x for x in range(n_folds) if x != test_fold]
         logging.info("Outer: train folds {}, test folds {}".format(outer_trn_folds, test_fold))
@@ -228,6 +246,8 @@ def cv(args, out_dir):
             os.makedirs(test_mdl_dir)
         test_loss, acc, recall = eval_model(model, optimizer, loss_func, train_data, test_data,
                                args.batch, args.epoch, args.patience, gpu_id, test_mdl_dir)
+        all_acc.append(acc)
+        all_recall.append(recall)
         test_losses.append(test_loss)
         logging.info("Test loss: {:.4f}".format(test_loss))
         logging.info("Test accuracy: {:.4f}".format(acc))
@@ -243,6 +263,8 @@ def cv(args, out_dir):
     rmse_loss = [x ** 0.5 for x in test_losses]
     mu, sigma = calc_stat(rmse_loss)
     logging.info("RMSE: {:.4f} ± {:.4f}".format(mu, sigma))
+    logging.info("average accuracy on test: {}".format(sum(all_acc) / len(all_acc)))
+    logging.info("average recall on test: {}".format({sum(all_recall) / len(all_recall)}))
 
 
 def main():
